@@ -101,7 +101,6 @@ Copyright (C) 2014 Nicholas Bollweg
 
     return api.clean(item);
   };
-
   api.clean = function(item){
     var base;
     item.container.selectAll(".fragment").each(function(){
@@ -117,24 +116,53 @@ Copyright (C) 2014 Nicholas Bollweg
         .style("opacity", 1);
     }
 
+    item.container.selectAll(".fragment.visible").each(function() {
+      var fragment = d3.select(this);
+      api.toggle(fragment, item, true);
+    });
+
     return api;
   };
 
+  api.handleSlideChange = function(event) {
+    var currentSlide = d3.select(event.currentSlide);
+    var svgFragments = currentSlide.selectAll("[data-svg-fragment]");
+    console.log(event, currentSlide);
+  
+    svgFragments.each(function(item) {
+      console.log("item", item, item.svg)
+      if (item && item.svg) {
+        // Apply initial state
+        console.log("api clean")
+        api.clean(item);
+      
+        // Show elements for visible fragments
+      }
+    });
+  };
   api.init = function(){
     var options = Reveal.getConfig().svgFragment || {};
-    if(window.d3){
+    
+    var initializeSlide = function() {
       api();
+      Reveal.addEventListener('slidechanged', api.handleSlideChange);
+      
+      // Execute handleSlideChange for the initial slide
+      api.handleSlideChange({ currentSlide: Reveal.getCurrentSlide() });
+    };
+
+    if(window.d3){
+      initializeSlide();
     }else if(window.require){
       require([api.cfg("d3")], function(_d3){
         d3 = _d3;
-        api();
+        initializeSlide();
       });
     }else{
-      api.load(api.cfg("d3"), api);
+      api.load(api.cfg("d3"), initializeSlide);
     }
     return api;
   };
-
   api.cfg = function(opt){
     var cfg = Reveal.getConfig().svgFragment || {};
 
